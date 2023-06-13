@@ -63,14 +63,15 @@ func multiUrl(urls []string) {
 
 	for url := range input_queue {
 		go func(url string) {
-			fmt.Printf("Sending %v\n", url)
+			fmt.Printf("\u2756Sending %v\n", url)
 			work_queue <- producer(url)
 		}(url)
 	}
 
 	for range urls {
-		fmt.Printf("Done with %v", <-work_queue)
+		fmt.Printf("\u2728Done with %v", <-work_queue)
 	}
+	close(work_queue)
 
 }
 
