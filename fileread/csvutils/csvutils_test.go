@@ -6,6 +6,8 @@ import (
 	"testing"
 )
 
+const TestString = "Maps differing: \nExpected: %v \nActual..: %v"
+
 func TestHappyPathFirstOk(t *testing.T) {
 	got, err := ReadCsvMap("./data/test_happy_path.csv", true)
 	if err != nil {
@@ -21,7 +23,7 @@ func TestHappyPathFirstOk(t *testing.T) {
 	}
 
 	if reflect.DeepEqual(got, want) == false {
-		t.Errorf("Maps differing: \nExpected: %v \nActual..: %v", want, got)
+		t.Errorf(TestString, want, got)
 	}
 
 }
@@ -41,7 +43,7 @@ func TestHappyPathLastOk(t *testing.T) {
 	}
 
 	if reflect.DeepEqual(got, want) == false {
-		t.Errorf("Maps differing: \nExpected: %v \nActual..: %v", want, got)
+		t.Errorf(TestString, want, got)
 	}
 
 }
@@ -64,7 +66,7 @@ func TestPerformReader(t *testing.T) {
 	}
 
 	if reflect.DeepEqual(got, want) == false {
-		t.Errorf("Maps differing: \nExpected: %v \nActual..: %v", want, got)
+		t.Errorf(TestString, want, got)
 	}
 
 }

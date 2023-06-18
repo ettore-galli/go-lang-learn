@@ -10,7 +10,7 @@ func TestPerformClock(t *testing.T) {
 	var printCollector string
 
 	ca := ClockApp{
-		sleep: func(_ time.Duration) {},
+		sleep: func(_ time.Duration) { time.Sleep(0) },
 		now: func() time.Time {
 			return time.Date(2023, time.June, 18, 10, 10, 10, 0, time.UTC)
 		},
