@@ -16,3 +16,15 @@ func TestSomma100(t *testing.T) {
 		}
 	}
 }
+
+func BenchmarkSomma100(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Somma100(i, i)
+	}
+}
+
+func ExampleStampaSomma100() {
+	StampaSomma100(3, 4)
+	// Output:
+	// Somma100(3, 4) => 700
+}
