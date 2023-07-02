@@ -45,5 +45,5 @@ func (rp *ResponseWriter) WriteResponse(outputDir string, response string) error
 }
 
 func NewResponseWriter() *ResponseWriter {
-	return &ResponseWriter{}
+	return &ResponseWriter{fileNameBuilder: BuildFileNameFromContent}
 }
