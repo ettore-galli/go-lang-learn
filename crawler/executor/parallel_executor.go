@@ -19,6 +19,7 @@ type ParallelExecutor[P any, M any] struct {
 
 func (exe *ParallelExecutor[P, M]) Perform() {
 	var wg sync.WaitGroup
+	wg.Add(1)
 
 	toBeProcessed := make(chan P, exe.Config.Buffer)
 
@@ -36,16 +37,20 @@ func (exe *ParallelExecutor[P, M]) Perform() {
 
 	}
 
-	wRange := make([]int, exe.Config.Workers)
-	for range wRange {
+	workersRange := make([]int, exe.Config.Workers)
+
+	for range workersRange {
 		go workThread(toBeProcessed, &wg)
 	}
 
-	for _, produced := range exe.Producer() {
-		fmt.Println(produced)
-		toBeProcessed <- produced
-		wg.Add(1)
-	}
+	go func() {
+		for _, produced := range exe.Producer() {
+			fmt.Println(produced)
+			toBeProcessed <- produced
+			wg.Add(1)
+		}
+		wg.Done()
+	}()
 
 	wg.Wait()
 
