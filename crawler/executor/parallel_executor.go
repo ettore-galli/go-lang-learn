@@ -44,8 +44,9 @@ func (exe *ParallelExecutor[P, M]) Perform() {
 	data := exe.Producer()
 
 	wg.Add(len(data))
-	for _, produced := range exe.Producer() {
+	for _, produced := range data {
 		toBeProcessed <- produced
 	}
 	wg.Wait()
+
 }
