@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestParallelExecutor(t *testing.T) {
+func TestParallelExecutorWg(t *testing.T) {
 	var resultMux sync.Mutex
 
 	results := []string{}
@@ -26,14 +26,14 @@ func TestParallelExecutor(t *testing.T) {
 		resultMux.Unlock()
 	}
 
-	parallelExecutor := ParallelExecutor[int, string]{
-		Config:    ParallelExecutorConfig{Buffer: 3, Workers: 2},
+	parallelExecutorWg := ParallelExecutorWg[int, string]{
+		Config:    ParallelExecutorWgConfig{Buffer: 3, Workers: 2},
 		Producer:  producer,
 		Processor: processor,
 		Consumer:  consumer,
 	}
 
-	parallelExecutor.Perform()
+	parallelExecutorWg.Perform()
 
 	fmt.Printf("Results: <<<%v>>>\n", results)
 
