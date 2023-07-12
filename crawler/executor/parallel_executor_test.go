@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 )
 
@@ -15,6 +16,7 @@ func Contains[T comparable](slice []T, element T) bool {
 }
 
 func TestParallelExecutor(t *testing.T) {
+	var result_mux sync.Mutex
 	results := []string{}
 
 	producer := func() []int {
@@ -27,7 +29,9 @@ func TestParallelExecutor(t *testing.T) {
 
 	consumer := func(item string) {
 		fmt.Println(item)
+		result_mux.Lock()
 		results = append(results, item)
+		result_mux.Unlock()
 	}
 
 	parallelExecutor := ParallelExecutor[int, string]{
@@ -40,8 +44,6 @@ func TestParallelExecutor(t *testing.T) {
 	parallelExecutor.Perform()
 
 	wantLen := 10
-
-	fmt.Printf("<<%v>>\n", results)
 
 	if len(results) != wantLen {
 		t.Errorf("Result expected to have length %v, got %v", wantLen, len(results))

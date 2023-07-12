@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -19,11 +18,10 @@ type ParallelExecutor[P any, M any] struct {
 
 func (exe *ParallelExecutor[P, M]) Perform() {
 	var wg sync.WaitGroup
-	wg.Add(1)
 
 	toBeProcessed := make(chan P, exe.Config.Buffer)
 
-	workThread := func(ch chan P, w *sync.WaitGroup) {
+	workThread := func(ch chan P, w *sync.WaitGroup, wid int) {
 		for {
 			produced, ok := <-ch
 			if !ok {
@@ -39,19 +37,15 @@ func (exe *ParallelExecutor[P, M]) Perform() {
 
 	workersRange := make([]int, exe.Config.Workers)
 
-	for range workersRange {
-		go workThread(toBeProcessed, &wg)
+	for wid := range workersRange {
+		go workThread(toBeProcessed, &wg, wid)
 	}
 
-	go func() {
-		for _, produced := range exe.Producer() {
-			fmt.Println(produced)
-			toBeProcessed <- produced
-			wg.Add(1)
-		}
-		wg.Done()
-	}()
+	data := exe.Producer()
 
+	wg.Add(len(data))
+	for _, produced := range exe.Producer() {
+		toBeProcessed <- produced
+	}
 	wg.Wait()
-
 }
