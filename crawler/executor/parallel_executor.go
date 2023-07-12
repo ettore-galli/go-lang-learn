@@ -27,26 +27,25 @@ func (exe *ParallelExecutor[P, M]) Perform() {
 			if !ok {
 				break
 			}
-
 			intermediate := exe.Processor(produced)
 			exe.Consumer(intermediate)
-			w.Done()
 		}
-
+		w.Done()
 	}
 
 	workersRange := make([]int, exe.Config.Workers)
 
+	wg.Add(exe.Config.Workers)
 	for wid := range workersRange {
 		go workThread(toBeProcessed, &wg, wid)
 	}
 
 	data := exe.Producer()
 
-	wg.Add(len(data))
 	for _, produced := range data {
 		toBeProcessed <- produced
 	}
+	close(toBeProcessed)
 	wg.Wait()
 
 }
