@@ -16,10 +16,10 @@ type ParallelExecutor[P any, M any] struct {
 	Consumer  func(item M)
 }
 
-func (exe *ParallelExecutor[P, M]) Perform() {
+func (executor *ParallelExecutor[P, M]) Perform() {
 	var wg sync.WaitGroup
 
-	toBeProcessed := make(chan P, exe.Config.Buffer)
+	processingQueue := make(chan P, executor.Config.Buffer)
 
 	workThread := func(ch chan P, w *sync.WaitGroup, wid int) {
 		for {
@@ -27,24 +27,33 @@ func (exe *ParallelExecutor[P, M]) Perform() {
 			if !ok {
 				break
 			}
-			intermediate := exe.Processor(produced)
-			exe.Consumer(intermediate)
+			intermediate := executor.Processor(produced)
+			executor.Consumer(intermediate)
 		}
 		w.Done()
 	}
 
-	workersRange := make([]int, exe.Config.Workers)
-
-	wg.Add(exe.Config.Workers)
-	for wid := range workersRange {
-		go workThread(toBeProcessed, &wg, wid)
+	startWorkers := func(workers int, w *sync.WaitGroup) {
+		workersRange := make([]int, workers)
+		for wid := range workersRange {
+			go workThread(processingQueue, &wg, wid)
+		}
 	}
 
-	for _, produced := range exe.Producer() {
-		toBeProcessed <- produced
+	produceData := func(procQ chan P) {
+		for _, produced := range executor.Producer() {
+			procQ <- produced
+		}
+		close(procQ)
 	}
-	close(toBeProcessed)
 
-	wg.Wait()
+	executorMain := func() {
+		wg.Add(executor.Config.Workers)
+		go startWorkers(executor.Config.Workers, &wg)
+		go produceData(processingQueue)
+		wg.Wait()
+	}
+
+	executorMain()
 
 }
