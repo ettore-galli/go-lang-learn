@@ -16,7 +16,8 @@ func Contains[T comparable](slice []T, element T) bool {
 }
 
 func TestParallelExecutor(t *testing.T) {
-	var result_mux sync.Mutex
+	var resultMux sync.Mutex
+
 	results := []string{}
 
 	producer := func() []int {
@@ -28,10 +29,10 @@ func TestParallelExecutor(t *testing.T) {
 	}
 
 	consumer := func(item string) {
-		fmt.Println(item)
-		result_mux.Lock()
+		fmt.Printf("Consumed: %v\n", item)
+		resultMux.Lock()
 		results = append(results, item)
-		result_mux.Unlock()
+		resultMux.Unlock()
 	}
 
 	parallelExecutor := ParallelExecutor[int, string]{
@@ -42,6 +43,8 @@ func TestParallelExecutor(t *testing.T) {
 	}
 
 	parallelExecutor.Perform()
+
+	fmt.Printf("Results: <<<%v>>>\n", results)
 
 	wantLen := 10
 
