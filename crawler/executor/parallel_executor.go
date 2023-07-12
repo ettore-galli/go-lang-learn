@@ -40,12 +40,11 @@ func (exe *ParallelExecutor[P, M]) Perform() {
 		go workThread(toBeProcessed, &wg, wid)
 	}
 
-	data := exe.Producer()
-
-	for _, produced := range data {
+	for _, produced := range exe.Producer() {
 		toBeProcessed <- produced
 	}
 	close(toBeProcessed)
+
 	wg.Wait()
 
 }
