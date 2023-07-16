@@ -21,7 +21,9 @@ type WorkerStatus struct {
 }
 
 type parallelExecutorInternals struct {
-	workersWaitGroup sync.WaitGroup
+	workersWaitGroup   sync.WaitGroup
+	jobMonitorMap      map[int]string
+	jobMonitoringQueue chan WorkerStatus
 }
 
 type ParallelExecutor[P any, M any] struct {
@@ -33,18 +35,18 @@ type ParallelExecutor[P any, M any] struct {
 	internals parallelExecutorInternals
 }
 
-func (executor *ParallelExecutor[P, M]) monitorEventsThread(jobMap map[int]string, jobMonQ chan WorkerStatus) {
+func (executor *ParallelExecutor[P, M]) monitorEventsThread() {
 	for {
-		event := <-jobMonQ
+		event := <-executor.internals.jobMonitoringQueue
 		fmt.Printf("event %v\n", event)
-		jobMap[event.Worker] = event.Status
-		executor.Monitor(MonitorUpdate{Message: "", JobMap: jobMap})
+		executor.internals.jobMonitorMap[event.Worker] = event.Status
+		executor.Monitor(MonitorUpdate{Message: "", JobMap: executor.internals.jobMonitorMap})
 	}
 }
 
-func (executor *ParallelExecutor[P, M]) mainWorkThread(ch chan P, wid int, jobMonitoringQueue chan WorkerStatus, jobMap map[int]string) {
+func (executor *ParallelExecutor[P, M]) mainWorkThread(ch chan P, wid int) {
 	fmt.Printf("Start worker %v\n", wid)
-	jobMonitoringQueue <- WorkerStatus{Worker: wid, Status: "start"}
+	executor.internals.jobMonitoringQueue <- WorkerStatus{Worker: wid, Status: "start"}
 	for {
 		produced, ok := <-ch
 		if !ok {
@@ -63,20 +65,20 @@ func (executor *ParallelExecutor[P, M]) mainWorkThread(ch chan P, wid int, jobMo
 
 	}
 	executor.internals.workersWaitGroup.Done()
-	jobMonitoringQueue <- WorkerStatus{Worker: wid, Status: "end"}
+	executor.internals.jobMonitoringQueue <- WorkerStatus{Worker: wid, Status: "end"}
 	fmt.Printf("End worker %v\n", wid)
 }
 
 func (executor *ParallelExecutor[P, M]) Perform() {
 	processingQueue := make(chan P, executor.Config.Buffer)
 
-	var jobMonitorMap = make(map[int]string)
-	jobMonitoringQueue := make(chan WorkerStatus, executor.Config.Workers)
+	executor.internals.jobMonitorMap = make(map[int]string)
+	executor.internals.jobMonitoringQueue = make(chan WorkerStatus, executor.Config.Workers)
 
-	startWorkers := func(workers int, jobMap map[int]string) {
+	startWorkers := func(workers int) {
 		workersRange := make([]int, workers)
 		for wid := range workersRange {
-			go executor.mainWorkThread(processingQueue, wid, jobMonitoringQueue, jobMap)
+			go executor.mainWorkThread(processingQueue, wid)
 		}
 	}
 
@@ -88,11 +90,11 @@ func (executor *ParallelExecutor[P, M]) Perform() {
 	}
 
 	executorMain := func() {
-		go executor.monitorEventsThread(jobMonitorMap, jobMonitoringQueue)
+		go executor.monitorEventsThread()
 
 		executor.internals.workersWaitGroup.Add(executor.Config.Workers)
 
-		go startWorkers(executor.Config.Workers, jobMonitorMap)
+		go startWorkers(executor.Config.Workers)
 
 		go produceData(processingQueue)
 
