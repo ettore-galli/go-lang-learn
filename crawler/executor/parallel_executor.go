@@ -69,18 +69,18 @@ func (executor *ParallelExecutor[P, M]) mainWorkThread(ch chan P, wid int) {
 	fmt.Printf("End worker %v\n", wid)
 }
 
+func (executor *ParallelExecutor[P, M]) startWorkers(workers int, processingQueue chan P) {
+	workersRange := make([]int, workers)
+	for wid := range workersRange {
+		go executor.mainWorkThread(processingQueue, wid)
+	}
+}
+
 func (executor *ParallelExecutor[P, M]) Perform() {
 	processingQueue := make(chan P, executor.Config.Buffer)
 
 	executor.internals.jobMonitorMap = make(map[int]string)
 	executor.internals.jobMonitoringQueue = make(chan WorkerStatus, executor.Config.Workers)
-
-	startWorkers := func(workers int) {
-		workersRange := make([]int, workers)
-		for wid := range workersRange {
-			go executor.mainWorkThread(processingQueue, wid)
-		}
-	}
 
 	produceData := func(procQ chan P) {
 		for _, produced := range executor.Producer() {
@@ -94,7 +94,7 @@ func (executor *ParallelExecutor[P, M]) Perform() {
 
 		executor.internals.workersWaitGroup.Add(executor.Config.Workers)
 
-		go startWorkers(executor.Config.Workers)
+		go executor.startWorkers(executor.Config.Workers, processingQueue)
 
 		go produceData(processingQueue)
 
