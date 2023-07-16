@@ -85,18 +85,10 @@ func (executor *ParallelExecutor[P, M]) Perform() {
 	executor.internals.jobMonitorMap = make(map[int]string)
 	executor.internals.jobMonitoringQueue = make(chan WorkerStatus, executor.Config.Workers)
 
-	executorMain := func() {
-		go executor.monitorEventsThread()
-
-		executor.internals.workersWaitGroup.Add(executor.Config.Workers)
-
-		go executor.startWorkers()
-
-		go executor.produceData()
-
-		executor.internals.workersWaitGroup.Wait()
-	}
-
-	executorMain()
+	go executor.monitorEventsThread()
+	executor.internals.workersWaitGroup.Add(executor.Config.Workers)
+	go executor.startWorkers()
+	go executor.produceData()
+	executor.internals.workersWaitGroup.Wait()
 
 }
