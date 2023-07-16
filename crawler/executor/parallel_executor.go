@@ -66,8 +66,8 @@ func (executor *ParallelExecutor[P, M]) mainWorkThread(ch chan P, wid int) {
 	executor.internals.jobMonitoringQueue <- WorkerStatus{Worker: wid, Status: "end"}
 }
 
-func (executor *ParallelExecutor[P, M]) startWorkers(workers int) {
-	workersRange := make([]int, workers)
+func (executor *ParallelExecutor[P, M]) startWorkers() {
+	workersRange := make([]int, executor.Config.Workers)
 	for wid := range workersRange {
 		go executor.mainWorkThread(executor.internals.processingQueue, wid)
 	}
@@ -90,7 +90,7 @@ func (executor *ParallelExecutor[P, M]) Perform() {
 
 		executor.internals.workersWaitGroup.Add(executor.Config.Workers)
 
-		go executor.startWorkers(executor.Config.Workers)
+		go executor.startWorkers()
 
 		go executor.produceData()
 
