@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -38,14 +37,12 @@ type ParallelExecutor[P any, M any] struct {
 func (executor *ParallelExecutor[P, M]) monitorEventsThread() {
 	for {
 		event := <-executor.internals.jobMonitoringQueue
-		fmt.Printf("event %v\n", event)
 		executor.internals.jobMonitorMap[event.Worker] = event.Status
 		executor.Monitor(MonitorUpdate{Message: "", JobMap: executor.internals.jobMonitorMap})
 	}
 }
 
 func (executor *ParallelExecutor[P, M]) mainWorkThread(ch chan P, wid int) {
-	fmt.Printf("Start worker %v\n", wid)
 	executor.internals.jobMonitoringQueue <- WorkerStatus{Worker: wid, Status: "start"}
 	for {
 		produced, ok := <-ch
@@ -66,7 +63,6 @@ func (executor *ParallelExecutor[P, M]) mainWorkThread(ch chan P, wid int) {
 	}
 	executor.internals.workersWaitGroup.Done()
 	executor.internals.jobMonitoringQueue <- WorkerStatus{Worker: wid, Status: "end"}
-	fmt.Printf("End worker %v\n", wid)
 }
 
 func (executor *ParallelExecutor[P, M]) startWorkers(workers int, processingQueue chan P) {
