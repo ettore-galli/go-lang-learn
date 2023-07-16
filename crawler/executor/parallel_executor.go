@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -9,19 +10,42 @@ type ParallelExecutorConfig struct {
 	Workers int
 }
 
+type MonitorUpdate struct {
+	Message string
+	JobMap  map[int]string
+}
+
+type WorkerStatus struct {
+	Worker int
+	Status string
+}
+
 type ParallelExecutor[P any, M any] struct {
 	Config    ParallelExecutorConfig
 	Producer  func() []P
 	Processor func(item P) M
 	Consumer  func(item M)
+	Monitor   func(update MonitorUpdate)
 }
 
 func (executor *ParallelExecutor[P, M]) Perform() {
-	var wg sync.WaitGroup
-
 	processingQueue := make(chan P, executor.Config.Buffer)
+	var workersWaitGroup sync.WaitGroup
+	var jobMonitorMap = make(map[int]string)
+	jobMonitoringQueue := make(chan WorkerStatus, executor.Config.Workers)
 
-	workThread := func(ch chan P, w *sync.WaitGroup, wid int) {
+	monitorEventsThread := func(jobMap map[int]string, jobMonQ chan WorkerStatus) {
+		for {
+			event := <-jobMonQ
+			fmt.Printf("event %v\n", event)
+			jobMap[event.Worker] = event.Status
+			executor.Monitor(MonitorUpdate{Message: "", JobMap: jobMap})
+		}
+	}
+
+	workThread := func(ch chan P, w *sync.WaitGroup, wid int, jobMap map[int]string) {
+		fmt.Printf("Start worker %v\n", wid)
+		jobMonitoringQueue <- WorkerStatus{Worker: wid, Status: "start"}
 		for {
 			produced, ok := <-ch
 			if !ok {
@@ -31,12 +55,14 @@ func (executor *ParallelExecutor[P, M]) Perform() {
 			executor.Consumer(intermediate)
 		}
 		w.Done()
+		jobMonitoringQueue <- WorkerStatus{Worker: wid, Status: "end"}
+		fmt.Printf("End worker %v\n", wid)
 	}
 
-	startWorkers := func(workers int, w *sync.WaitGroup) {
+	startWorkers := func(workers int, w *sync.WaitGroup, jobMap map[int]string) {
 		workersRange := make([]int, workers)
 		for wid := range workersRange {
-			go workThread(processingQueue, &wg, wid)
+			go workThread(processingQueue, &workersWaitGroup, wid, jobMap)
 		}
 	}
 
@@ -48,10 +74,15 @@ func (executor *ParallelExecutor[P, M]) Perform() {
 	}
 
 	executorMain := func() {
-		wg.Add(executor.Config.Workers)
-		go startWorkers(executor.Config.Workers, &wg)
+		go monitorEventsThread(jobMonitorMap, jobMonitoringQueue)
+
+		workersWaitGroup.Add(executor.Config.Workers)
+
+		go startWorkers(executor.Config.Workers, &workersWaitGroup, jobMonitorMap)
+
 		go produceData(processingQueue)
-		wg.Wait()
+
+		workersWaitGroup.Wait()
 	}
 
 	executorMain()
