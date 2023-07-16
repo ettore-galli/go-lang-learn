@@ -61,7 +61,7 @@ func TestParallelExecutor(t *testing.T) {
 }
 
 func TestParallelExecutorDemo(t *testing.T) {
-
+	var resultMux sync.Mutex
 	results := []string{}
 
 	producer := func() []int {
@@ -75,7 +75,9 @@ func TestParallelExecutorDemo(t *testing.T) {
 
 	consumer := func(item string) error {
 		time.Sleep(170 * time.Millisecond)
+		resultMux.Lock()
 		results = append(results, item)
+		resultMux.Unlock()
 		return nil
 	}
 
@@ -95,4 +97,18 @@ func TestParallelExecutorDemo(t *testing.T) {
 
 	fmt.Printf("Results: <<<%v>>>\n", results)
 
+	wantLen := 10
+
+	if len(results) != wantLen {
+		t.Errorf("Result expected to have length %v, got %v", wantLen, len(results))
+	}
+
+	wantItems := []string{"*0*", "*1*", "*2*", "*3*", "*4*", "*5*", "*6*", "*7*", "*8*", "*9*"}
+
+	for _, g := range wantItems {
+		isPresent := Contains(results, g)
+		if !isPresent {
+			t.Errorf("\n%v not in results", g)
+		}
+	}
 }
