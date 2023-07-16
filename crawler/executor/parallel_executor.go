@@ -19,7 +19,8 @@ type WorkerStatus struct {
 	Status string
 }
 
-type parallelExecutorInternals struct {
+type parallelExecutorInternals[P any] struct {
+	processingQueue    chan P
 	workersWaitGroup   sync.WaitGroup
 	jobMonitorMap      map[int]string
 	jobMonitoringQueue chan WorkerStatus
@@ -31,7 +32,7 @@ type ParallelExecutor[P any, M any] struct {
 	Processor func(item P) (M, error)
 	Consumer  func(item M) error
 	Monitor   func(update MonitorUpdate)
-	internals parallelExecutorInternals
+	internals parallelExecutorInternals[P]
 }
 
 func (executor *ParallelExecutor[P, M]) monitorEventsThread() {
@@ -65,34 +66,33 @@ func (executor *ParallelExecutor[P, M]) mainWorkThread(ch chan P, wid int) {
 	executor.internals.jobMonitoringQueue <- WorkerStatus{Worker: wid, Status: "end"}
 }
 
-func (executor *ParallelExecutor[P, M]) startWorkers(workers int, processingQueue chan P) {
+func (executor *ParallelExecutor[P, M]) startWorkers(workers int) {
 	workersRange := make([]int, workers)
 	for wid := range workersRange {
-		go executor.mainWorkThread(processingQueue, wid)
+		go executor.mainWorkThread(executor.internals.processingQueue, wid)
 	}
 }
 
-func (executor *ParallelExecutor[P, M]) Perform() {
-	processingQueue := make(chan P, executor.Config.Buffer)
+func (executor *ParallelExecutor[P, M]) produceData() {
+	for _, produced := range executor.Producer() {
+		executor.internals.processingQueue <- produced
+	}
+	close(executor.internals.processingQueue)
+}
 
+func (executor *ParallelExecutor[P, M]) Perform() {
+	executor.internals.processingQueue = make(chan P, executor.Config.Buffer)
 	executor.internals.jobMonitorMap = make(map[int]string)
 	executor.internals.jobMonitoringQueue = make(chan WorkerStatus, executor.Config.Workers)
-
-	produceData := func(procQ chan P) {
-		for _, produced := range executor.Producer() {
-			procQ <- produced
-		}
-		close(procQ)
-	}
 
 	executorMain := func() {
 		go executor.monitorEventsThread()
 
 		executor.internals.workersWaitGroup.Add(executor.Config.Workers)
 
-		go executor.startWorkers(executor.Config.Workers, processingQueue)
+		go executor.startWorkers(executor.Config.Workers)
 
-		go produceData(processingQueue)
+		go executor.produceData()
 
 		executor.internals.workersWaitGroup.Wait()
 	}
