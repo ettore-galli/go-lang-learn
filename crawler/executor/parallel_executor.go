@@ -23,8 +23,8 @@ type WorkerStatus struct {
 type ParallelExecutor[P any, M any] struct {
 	Config    ParallelExecutorConfig
 	Producer  func() []P
-	Processor func(item P) M
-	Consumer  func(item M)
+	Processor func(item P) (M, error)
+	Consumer  func(item M) error
 	Monitor   func(update MonitorUpdate)
 }
 
@@ -51,8 +51,17 @@ func (executor *ParallelExecutor[P, M]) Perform() {
 			if !ok {
 				break
 			}
-			intermediate := executor.Processor(produced)
-			executor.Consumer(intermediate)
+
+			intermediate, procErr := executor.Processor(produced)
+			if procErr != nil {
+				continue
+			}
+
+			consErr := executor.Consumer(intermediate)
+			if consErr != nil {
+				continue
+			}
+
 		}
 		w.Done()
 		jobMonitoringQueue <- WorkerStatus{Worker: wid, Status: "end"}

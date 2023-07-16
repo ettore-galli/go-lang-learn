@@ -16,14 +16,15 @@ func TestParallelExecutor(t *testing.T) {
 		return []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 	}
 
-	processor := func(item int) string {
-		return fmt.Sprintf("*%v*", item)
+	processor := func(item int) (string, error) {
+		return fmt.Sprintf("*%v*", item), nil
 	}
 
-	consumer := func(item string) {
+	consumer := func(item string) error {
 		resultMux.Lock()
 		results = append(results, item)
 		resultMux.Unlock()
+		return nil
 	}
 
 	monitor := func(update MonitorUpdate) {
@@ -67,14 +68,15 @@ func TestParallelExecutorDemo(t *testing.T) {
 		return []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 	}
 
-	processor := func(item int) string {
-		time.Sleep(1100 * time.Millisecond)
-		return fmt.Sprintf("*%v*", item)
+	processor := func(item int) (string, error) {
+		time.Sleep(110 * time.Millisecond)
+		return fmt.Sprintf("*%v*", item), nil
 	}
 
-	consumer := func(item string) {
-		time.Sleep(1700 * time.Millisecond)
+	consumer := func(item string) error {
+		time.Sleep(170 * time.Millisecond)
 		results = append(results, item)
+		return nil
 	}
 
 	monitor := func(update MonitorUpdate) {
