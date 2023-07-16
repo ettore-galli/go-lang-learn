@@ -70,6 +70,9 @@ func TestParallelExecutorDemo(t *testing.T) {
 
 	processor := func(item int) (string, error) {
 		time.Sleep(110 * time.Millisecond)
+		if item == 7 {
+			return "", fmt.Errorf("Item %v not admitted", item)
+		}
 		return fmt.Sprintf("*%v*", item), nil
 	}
 
@@ -97,13 +100,13 @@ func TestParallelExecutorDemo(t *testing.T) {
 
 	fmt.Printf("Results: <<<%v>>>\n", results)
 
-	wantLen := 10
+	wantLen := 9
 
 	if len(results) != wantLen {
 		t.Errorf("Result expected to have length %v, got %v", wantLen, len(results))
 	}
 
-	wantItems := []string{"*0*", "*1*", "*2*", "*3*", "*4*", "*5*", "*6*", "*7*", "*8*", "*9*"}
+	wantItems := []string{"*0*", "*1*", "*2*", "*3*", "*4*", "*5*", "*6*", "*8*", "*9*"}
 
 	for _, g := range wantItems {
 		isPresent := Contains(results, g)
