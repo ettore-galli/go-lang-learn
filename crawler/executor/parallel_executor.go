@@ -74,6 +74,7 @@ func (executor *ParallelExecutor[P, M]) startWorkers(workers int) {
 }
 
 func (executor *ParallelExecutor[P, M]) produceData() {
+	executor.internals.workersWaitGroup.Add(executor.Config.Workers)
 	for _, produced := range executor.Producer() {
 		executor.internals.processingQueue <- produced
 	}
@@ -87,8 +88,6 @@ func (executor *ParallelExecutor[P, M]) Perform() {
 
 	executorMain := func() {
 		go executor.monitorEventsThread()
-
-		executor.internals.workersWaitGroup.Add(executor.Config.Workers)
 
 		go executor.startWorkers(executor.Config.Workers)
 
