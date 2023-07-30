@@ -144,14 +144,19 @@ func (executor *ParallelExecutor[P, M]) Perform() {
 	executor.internals.jobMonitoringQueue = make(chan WorkerStatus, executor.Config.Workers)
 
 	go executor.monitorEventsThread()
+
 	executor.internals.workersWaitGroup.Add(executor.Config.Workers)
 	go executor.startWorkers(executor.Config.Workers)
 	go executor.produceData()
+
 	executor.internals.consumerWaitGroup.Add(1)
 	go executor.consumeData()
+
 	executor.internals.workersWaitGroup.Wait()
 	close(executor.internals.consumerQueue)
+
 	executor.internals.consumerWaitGroup.Wait()
+
 	fmt.Println(executor.internals.processingLog) // TODO: Replace with something better
 
 }
