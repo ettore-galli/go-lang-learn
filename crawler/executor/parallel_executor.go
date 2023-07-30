@@ -54,19 +54,22 @@ func (executor *ParallelExecutor[P, M]) monitorEventsThread() {
 func (executor *ParallelExecutor[P, M]) mainWorkThread(ch chan P, workerId int) {
 	executor.internals.jobMonitoringQueue <- WorkerStatus{Worker: workerId, Status: "start"}
 	for {
+
 		produced, ok := <-ch
+
 		if !ok {
 			executor.internals.processingLog = append(
 				executor.internals.processingLog,
 				ProcessingLogEntry{
-					success: false,
-					message: "Error reading from queue",
+					success: true,
+					message: "No more data in queue",
 				},
 			)
 			break
 		}
 
 		intermediate, procErr := executor.Processor(produced)
+
 		if procErr != nil {
 			executor.internals.processingLog = append(
 				executor.internals.processingLog,
@@ -79,6 +82,7 @@ func (executor *ParallelExecutor[P, M]) mainWorkThread(ch chan P, workerId int) 
 		}
 
 		consErr := executor.Consumer(intermediate)
+
 		if consErr != nil {
 			executor.internals.processingLog = append(
 				executor.internals.processingLog,
