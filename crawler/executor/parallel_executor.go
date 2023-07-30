@@ -26,9 +26,11 @@ type WorkerStatus struct {
 	Status string
 }
 
-type parallelExecutorInternals[P any] struct {
+type parallelExecutorInternals[P any, M any] struct {
 	processingQueue    chan P
+	consumerQueue      chan M
 	workersWaitGroup   sync.WaitGroup
+	consumerWaitGroup  sync.WaitGroup
 	jobMonitorMap      map[int]string
 	jobMonitoringQueue chan WorkerStatus
 	processingLog      []ProcessingLogEntry
@@ -40,7 +42,7 @@ type ParallelExecutor[P any, M any] struct {
 	Processor func(item P) (M, error)
 	Consumer  func(item M) error
 	Monitor   func(update MonitorUpdate)
-	internals parallelExecutorInternals[P]
+	internals parallelExecutorInternals[P, M]
 }
 
 func (executor *ParallelExecutor[P, M]) monitorEventsThread() {
@@ -81,18 +83,7 @@ func (executor *ParallelExecutor[P, M]) mainWorkThread(ch chan P, workerId int) 
 			continue
 		}
 
-		consErr := executor.Consumer(intermediate)
-
-		if consErr != nil {
-			executor.internals.processingLog = append(
-				executor.internals.processingLog,
-				ProcessingLogEntry{
-					itemIdentifier: string("consumed"),
-					success:        false,
-					message:        fmt.Sprintf("Consumning error: %v", procErr)},
-			)
-			continue
-		}
+		executor.internals.consumerQueue <- intermediate
 
 	}
 	executor.internals.workersWaitGroup.Done()
@@ -113,8 +104,42 @@ func (executor *ParallelExecutor[P, M]) produceData() {
 	close(executor.internals.processingQueue)
 }
 
+func (executor *ParallelExecutor[P, M]) consumeData() {
+	for {
+
+		intermediate, ok := <-executor.internals.consumerQueue
+
+		if !ok {
+			executor.internals.processingLog = append(
+				executor.internals.processingLog,
+				ProcessingLogEntry{
+					success: true,
+					message: "No more data in consumer queue",
+				},
+			)
+			break
+		}
+
+		consErr := executor.Consumer(intermediate)
+
+		if consErr != nil {
+			executor.internals.processingLog = append(
+				executor.internals.processingLog,
+				ProcessingLogEntry{
+					itemIdentifier: string("consumed"),
+					success:        false,
+					message:        fmt.Sprintf("Consumning error: %v", consErr)},
+			)
+			continue
+		}
+	}
+	executor.internals.consumerWaitGroup.Done()
+}
+
 func (executor *ParallelExecutor[P, M]) Perform() {
 	executor.internals.processingQueue = make(chan P, executor.Config.Buffer)
+	executor.internals.consumerQueue = make(chan M, executor.Config.Buffer)
+
 	executor.internals.jobMonitorMap = make(map[int]string)
 	executor.internals.jobMonitoringQueue = make(chan WorkerStatus, executor.Config.Workers)
 
@@ -122,7 +147,11 @@ func (executor *ParallelExecutor[P, M]) Perform() {
 	executor.internals.workersWaitGroup.Add(executor.Config.Workers)
 	go executor.startWorkers(executor.Config.Workers)
 	go executor.produceData()
+	executor.internals.consumerWaitGroup.Add(1)
+	go executor.consumeData()
 	executor.internals.workersWaitGroup.Wait()
+	close(executor.internals.consumerQueue)
+	executor.internals.consumerWaitGroup.Wait()
 	fmt.Println(executor.internals.processingLog) // TODO: Replace with something better
 
 }
