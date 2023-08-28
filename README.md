@@ -24,3 +24,7 @@ go test utils/* -v -bench
 
 ## Run all tests
 go test -v ./...
+
+## Various example commands
+go test -run TestParallelExecutor -v
+go run .

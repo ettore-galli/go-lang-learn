@@ -26,6 +26,11 @@ type WorkerStatus struct {
 	Status string
 }
 
+type ConsumerStatus struct {
+	Worker int
+	Status string
+}
+
 type parallelExecutorInternals[P any, M any] struct {
 	processingQueue    chan P
 	consumerQueue      chan M
@@ -46,10 +51,12 @@ type ParallelExecutor[P any, M any] struct {
 }
 
 func (executor *ParallelExecutor[P, M]) monitorEventsThread() {
-	for {
-		event := <-executor.internals.jobMonitoringQueue
-		executor.internals.jobMonitorMap[event.Worker] = event.Status
-		executor.Monitor(MonitorUpdate{Message: "", JobMap: executor.internals.jobMonitorMap})
+	if executor.Monitor != nil {
+		for {
+			event := <-executor.internals.jobMonitoringQueue
+			executor.internals.jobMonitorMap[event.Worker] = event.Status
+			executor.Monitor(MonitorUpdate{Message: "", JobMap: executor.internals.jobMonitorMap})
+		}
 	}
 }
 
