@@ -1,7 +1,5 @@
 package bytemap
 
-type FibCalcFunction func(int, FibCalcFunction) int
-
 func ToImageBuffer(imageMap []byte, width int16) []byte {
 
 	buffer := make([]byte, len(imageMap))
