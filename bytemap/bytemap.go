@@ -11,14 +11,8 @@ func ToImageBuffer(imageMap []byte, width int16) []byte {
 		for i := int16(0); i < 8; i++ {
 			mask := byte(1 << (7 - i))
 			imageBits := ((mask & imageByte) >> (7 - i)) << (7 - index%8)
-			// bytesBufferPos := int16(index)/wBytes + i*wBytes + (int16(index)/wBytes)/8
 			bytesBufferPos := int16(index)/8 + i*wBytes
-			// fmt.Printf(
-			// 	"index=%v, i=%v, bytesBufferPos=%v buffer[bytesBufferPos]=%v, mask=%v, imageByte=%v, imageBits=%v \n",
-			// 	index, i, bytesBufferPos, buffer[bytesBufferPos], mask, imageByte, imageBits)
-
 			buffer[bytesBufferPos] |= imageBits
-
 		}
 	}
 
