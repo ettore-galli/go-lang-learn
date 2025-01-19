@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"example.com/hello/internal/greeter"
+	"moul.io/banner"
 )
 
 func Hello() string {
-	return greeter.MakeHelloGreeting()
+	return banner.Inline(greeter.MakeHelloGreeting())
 }
 
 func main() {
