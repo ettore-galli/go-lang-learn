@@ -7,6 +7,9 @@ build:
 	go build -o $(dist_dir) -ldflags " -X 'main.version=$$(cat version)'"
 
 test:
+	go test ./...
+
+test-bench:
 	go test -bench=. ./...
 
 lint:
