@@ -5,3 +5,9 @@ build:
 	mkdir $(dist_dir)
 	date > $(dist_dir)/build.info.txt
 	go build -o $(dist_dir) -ldflags " -X 'main.version=$$(cat version)'"
+
+test:
+	go test -bench=. ./...
+
+lint:
+	go vet ./...

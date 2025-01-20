@@ -12,3 +12,10 @@ func TestRepeatChar(t *testing.T) {
 		t.Errorf("Want [%s], got [%s]", want, got)
 	}
 }
+
+func BenchmarkRepeatChar(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		RepeatChar("x", 5)
+	}
+
+}
