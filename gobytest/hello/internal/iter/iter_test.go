@@ -1,6 +1,7 @@
 package iter
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -18,4 +19,9 @@ func BenchmarkRepeatChar(b *testing.B) {
 		RepeatChar("x", 5)
 	}
 
+}
+
+func ExampleRepeatChar() {
+	fmt.Print(RepeatChar("w", 3))
+	// Output: www
 }
