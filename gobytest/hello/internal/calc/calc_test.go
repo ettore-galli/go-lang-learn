@@ -21,12 +21,26 @@ func Example_calcSum() {
 	// Output: 3 + 7 = 10
 }
 
-func TestSumList(t *testing.T) {
-	var numbers [ListSize]int = [ListSize]int{1, 2, 3, 4, 5, 6, 7}
+func TestSumArray(t *testing.T) {
+	t.Run("Test di base", func(t *testing.T) {
+		var numbers [ListSize]int = [ListSize]int{1, 2, 3, 4, 5, 6, 7}
 
-	want := 28
-	got := SumList(numbers)
-	if got != want {
-		t.Errorf("SumList failed; given: %v; want: %d, got; %d", numbers, want, got)
-	}
+		want := 28
+		got := SumArray(numbers)
+		if got != want {
+			t.Errorf("SumList failed; given: %v; want: %d, got; %d", numbers, want, got)
+		}
+	})
+}
+
+func TestSumSlice(t *testing.T) {
+	t.Run("Test di base", func(t *testing.T) {
+		var numbersSlice []int = []int{1, 2, 3, 4, 5, 6, 7}
+
+		want := 28
+		got := SumSlice(numbersSlice)
+		if got != want {
+			t.Errorf("SumList failed; given: %v; want: %d, got; %d", numbersSlice, want, got)
+		}
+	})
 }
