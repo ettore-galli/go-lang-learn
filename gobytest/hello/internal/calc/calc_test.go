@@ -2,6 +2,7 @@ package calc
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -28,7 +29,7 @@ func TestSumArray(t *testing.T) {
 		want := 28
 		got := SumArray(numbers)
 		if got != want {
-			t.Errorf("SumList failed; given: %v; want: %d, got; %d", numbers, want, got)
+			t.Errorf("given: %v; want: %d, got; %d", numbers, want, got)
 		}
 	})
 }
@@ -40,7 +41,95 @@ func TestSumSlice(t *testing.T) {
 		want := 28
 		got := SumSlice(numbersSlice)
 		if got != want {
-			t.Errorf("SumList failed; given: %v; want: %d, got; %d", numbersSlice, want, got)
+			t.Errorf("given: %v; want: %d, got; %d", numbersSlice, want, got)
+		}
+	})
+}
+
+func TestSumSlices(t *testing.T) {
+	t.Run("Test di base", func(t *testing.T) {
+		var slice1 []int = []int{1, 2, 3}
+		var slice2 []int = []int{10, 20, 30}
+		var slice3 []int = []int{100, 200, 300}
+
+		want := []int{6, 60, 600}
+		got := SumSlices(slice1, slice2, slice3)
+
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("want: %d, got; %d", want, got)
+		}
+	})
+}
+
+func TestSumTails(t *testing.T) {
+	checkResult := func(t testing.TB, got []int, want []int) {
+		t.Helper()
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("want: %d, got; %d", want, got)
+		}
+
+	}
+	t.Run("Test di base", func(t *testing.T) {
+		var slice1 []int = []int{1, 2, 3}
+		var slice2 []int = []int{10, 20, 30}
+		var slice3 []int = []int{100, 200, 300}
+
+		want := []int{5, 50, 500}
+		got := SumTails(slice1, slice2, slice3)
+
+		checkResult(t, got, want)
+
+	})
+
+	t.Run("Test vuoti", func(t *testing.T) {
+		var slice1 []int = []int{}
+		var slice2 []int = []int{}
+
+		want := []int{0, 0}
+		got := SumTails(slice1, slice2)
+
+		checkResult(t, got, want)
+
+	})
+}
+
+func TestPerimeter(t *testing.T) {
+	t.Run("Test di base", func(t *testing.T) {
+		want := 50.0
+		got := Perimeter(Rectangle{width: 10.0, height: 15.0})
+		if got != want {
+			t.Errorf("want: %f, got; %f", want, got)
+		}
+	})
+}
+
+func TestAreaStandalone(t *testing.T) {
+	t.Run("Rettangolo", func(t *testing.T) {
+		want := 150.0
+		got := Area(Rectangle{width: 10.0, height: 15.0})
+		if got != want {
+			t.Errorf("want: %f, got; %f", want, got)
+		}
+	})
+
+}
+
+func TestAreaMethods(t *testing.T) {
+	t.Run("Rettangolo", func(t *testing.T) {
+		rectangle := Rectangle{width: 10.0, height: 15.0}
+		want := 150.0
+		got := rectangle.Area()
+		if got != want {
+			t.Errorf("want: %f, got; %f", want, got)
+		}
+	})
+
+	t.Run("Cerchio", func(t *testing.T) {
+		circle := Circle{radius: 10.0}
+		want := 628.0
+		got := circle.Area()
+		if got != want {
+			t.Errorf("want: %f, got; %f", want, got)
 		}
 	})
 }
