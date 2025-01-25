@@ -150,10 +150,12 @@ func TestAreaMulti(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		got := testCase.shape.Area()
-		if got != testCase.want {
-			t.Errorf("case: %+v : want: %f, got; %f", testCase.shape, testCase.want, got)
-		}
+		t.Run(fmt.Sprintf("%T", testCase.shape), func(t *testing.T) {
+			got := testCase.shape.Area()
+			if got != testCase.want {
+				t.Errorf("case: %+v : want: %f, got; %f", testCase.shape, testCase.want, got)
+			}
+		})
 	}
 
 }
