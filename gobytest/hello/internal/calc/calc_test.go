@@ -146,7 +146,7 @@ func TestAreaMulti(t *testing.T) {
 	}{
 		{shape: Rectangle{2, 3}, want: 6.0},
 		{shape: Circle{5}, want: 157.0},
-		{shape: Triangle{base: 5, height: 3}, want: 7.5},
+		{shape: Triangle{Base: 5, Height: 3}, want: 7.5},
 	}
 
 	for _, testCase := range testCases {
