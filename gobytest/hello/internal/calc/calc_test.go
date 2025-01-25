@@ -115,21 +115,45 @@ func TestAreaStandalone(t *testing.T) {
 }
 
 func TestAreaMethods(t *testing.T) {
-	t.Run("Rettangolo", func(t *testing.T) {
-		rectangle := Rectangle{width: 10.0, height: 15.0}
-		want := 150.0
-		got := rectangle.Area()
+	checkArea := func(t testing.TB, shape Shape, want float64) {
+		t.Helper()
+
+		got := shape.Area()
 		if got != want {
 			t.Errorf("want: %f, got; %f", want, got)
 		}
+	}
+
+	t.Run("Rettangolo", func(t *testing.T) {
+		rectangle := Rectangle{width: 10.0, height: 15.0}
+		want := 150.0
+		checkArea(t, rectangle, want)
+
 	})
 
 	t.Run("Cerchio", func(t *testing.T) {
 		circle := Circle{radius: 10.0}
 		want := 628.0
-		got := circle.Area()
-		if got != want {
-			t.Errorf("want: %f, got; %f", want, got)
-		}
+		checkArea(t, circle, want)
 	})
+
+}
+
+func TestAreaMulti(t *testing.T) {
+	testCases := []struct {
+		shape Shape
+		want  float64
+	}{
+		{shape: Rectangle{2, 3}, want: 6.0},
+		{shape: Circle{5}, want: 157.0},
+		{shape: Triangle{base: 5, height: 3}, want: 7.5},
+	}
+
+	for _, testCase := range testCases {
+		got := testCase.shape.Area()
+		if got != testCase.want {
+			t.Errorf("case: %+v : want: %f, got; %f", testCase.shape, testCase.want, got)
+		}
+	}
+
 }
