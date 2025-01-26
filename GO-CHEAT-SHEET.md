@@ -20,8 +20,11 @@ type MyStruct{
     field2 float64
 }
 
-func (ms MyStruct) MyMethod() float64 {
- return 3.1415
+func (ms MyStruct) MyMethod() string {
+    return ms.someField
+}
+func (ms *MyStruct) MyMethod() {
+    ms.someField = "somevalue"
 }
 
 mystruct := MyStruct{"x", 1.0}
@@ -45,6 +48,19 @@ for i := 0; i < 10; i++ {
 }
 for index, item := range items {
     // ...
+}
+```
+
+## Errors
+
+```go
+func DoWithErrors(...) error {
+    errorHappened :=True    
+    if errorHappened {
+            return errors.New("message") // Error
+            return fmt.Errorf("message %s", someData) // Formatted error
+    }
+    return nil // No error
 }
 ```
 
