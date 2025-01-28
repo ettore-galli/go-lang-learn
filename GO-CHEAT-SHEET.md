@@ -95,3 +95,16 @@ Test for slice equality
 ```go
 !reflect.DeepEqual(got, want)
 ```
+
+## Linters and tools
+
+Errcheck
+
+```go
+go install github.com/kisielk/errcheck@latest
+```
+
+```shell
+# Default $GOPATH=~/go
+export PATH=$PATH:~/go/bin # export PATH=$PATH:$GOPATH
+```
