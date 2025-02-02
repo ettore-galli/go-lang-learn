@@ -29,3 +29,42 @@ func (wallet *Wallet) Withdraw(amount Bitcoin) error {
 func (wallet Wallet) Balance() Bitcoin {
 	return wallet.balance
 }
+
+func SearchOnMap(searchMap map[string]string, key string) string {
+	return searchMap[key]
+}
+
+type Dictionary map[string]string
+
+func (dict Dictionary) Search(key string) (string, error) {
+	value, exists := dict[key]
+	if !exists {
+		return "", fmt.Errorf("non trovato %s", key)
+	}
+	return value, nil
+}
+
+func (dict Dictionary) AddEntry(key string, value string) error {
+	_, exists := dict[key]
+	if exists {
+		return fmt.Errorf("entry [%s] exists", key)
+	}
+	dict[key] = value
+
+	return nil
+}
+
+func (dict Dictionary) UpdateEntry(key string, value string) error {
+	_, exists := dict[key]
+	if !exists {
+		return fmt.Errorf("entry [%s] does not exist", key)
+	}
+	dict[key] = value
+
+	return nil
+}
+
+func (dict Dictionary) DeleteEntry(key string) error {
+	delete(dict, key)
+	return nil
+}

@@ -44,6 +44,12 @@ func TestWallet(t *testing.T) {
 	})
 }
 
+func assertStrings(t *testing.T, got string, want string) {
+	if got != want {
+		t.Errorf("\nwant: [%s]; \ngot.: [%s]", want, got)
+	}
+}
+
 func TestWalletWithdraw(t *testing.T) {
 	wallet := Wallet{}
 	wallet.Deposit(10)
@@ -65,4 +71,87 @@ func TestBitcoinString(t *testing.T) {
 	if got != want {
 		t.Errorf("want: %s; got: %s", want, got)
 	}
+}
+
+func TestSearchOnMap(t *testing.T) {
+	testMap := map[string]string{"test": "questo è un test"}
+	got := SearchOnMap(testMap, "test")
+	want := "questo è un test"
+	if got != want {
+		t.Errorf("want: %s; got: %s", want, got)
+	}
+	assertStrings(t, got, want)
+}
+
+func TestSearchOnDictionary(t *testing.T) {
+	t.Run("found", func(t *testing.T) {
+		dict := Dictionary{"test": "questo è un test"}
+		got, _ := dict.Search("test")
+		want := "questo è un test"
+
+		assertStrings(t, got, want)
+
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		dict := Dictionary{"test": "questo è un test"}
+		_, err := dict.Search("xxx")
+		wantErr := "non trovato xxx"
+
+		assertStrings(t, err.Error(), wantErr)
+	})
+}
+
+func TestAddDictionaryEntry(t *testing.T) {
+	t.Run("add - ok", func(t *testing.T) {
+		dict := Dictionary{}
+		dict.AddEntry("one", "The number one")
+		got, _ := dict.Search("one")
+		want := "The number one"
+
+		assertStrings(t, got, want)
+
+	})
+
+	t.Run("add / exixts", func(t *testing.T) {
+		dict := Dictionary{"one": "The number one"}
+		err := dict.AddEntry("one", "The number one")
+		want := "entry [one] exists"
+
+		assertStrings(t, err.Error(), want)
+
+	})
+
+	t.Run("update - ok", func(t *testing.T) {
+		dict := Dictionary{"one": "The number one"}
+		dict.UpdateEntry("one", "nr.1")
+		got, _ := dict.Search("one")
+		want := "nr.1"
+
+		assertStrings(t, got, want)
+
+	})
+
+	t.Run("update / not exixts", func(t *testing.T) {
+		dict := Dictionary{"one": "The number one"}
+		err := dict.UpdateEntry("ONE", "1")
+		want := "entry [ONE] does not exist"
+
+		assertStrings(t, err.Error(), want)
+
+	})
+
+}
+
+func TestDeleteDictionary(t *testing.T) {
+	t.Run("delete", func(t *testing.T) {
+		dict := Dictionary{"test": "questo è un test"}
+		dict.DeleteEntry("test")
+		_, err := dict.Search("test")
+		wantErr := "non trovato test"
+
+		assertStrings(t, err.Error(), wantErr)
+
+	})
+
 }

@@ -32,6 +32,15 @@ mystruct := MyStruct{field1:"x", field2:1.0}
 
 ```
 
+## Dictionaries (maps)
+
+```go
+dict := map[string]string{}
+dict["key"] = value
+value, exists := dict["key"]
+delete(dict, key)
+```
+
 ## Interfaces
 
 ```go
