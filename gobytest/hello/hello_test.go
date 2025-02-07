@@ -30,7 +30,7 @@ type SpyDelayer struct {
 	calls int
 }
 
-func (delayer *SpyDelayer) Sleep(d time.Duration) {
+func (delayer *SpyDelayer) Sleep() {
 	delayer.calls++
 }
 
@@ -50,25 +50,44 @@ func TestCountdown(t *testing.T) {
 	}
 }
 
-type SpyInspector struct {
+type SpyLogicInspector struct {
 	operations []string
 }
 
-func (delayer *SpyInspector) Sleep(d time.Duration) {
+func (delayer *SpyLogicInspector) Sleep() {
 	delayer.operations = append(delayer.operations, "sleep")
 }
 
-func (delayer *SpyInspector) Write(p []byte) (n int, err error) {
+func (delayer *SpyLogicInspector) Write(p []byte) (n int, err error) {
 	delayer.operations = append(delayer.operations, "print")
 	return 0, nil
 }
 
 func TestCountdownLogic(t *testing.T) {
-	spy := SpyInspector{}
+	spy := SpyLogicInspector{}
 	Countdown(&spy, &spy)
 	wantCalls := []string{"print", "sleep", "print", "sleep", "print", "sleep", "print"}
 	spyCalls := spy.operations
 	if !reflect.DeepEqual(spyCalls, wantCalls) {
 		t.Errorf("got %q, want %q", spyCalls, wantCalls)
+	}
+}
+
+type SpyTime struct {
+	sleeps []time.Duration
+}
+
+func (spyTime *SpyTime) Sleep(d time.Duration) {
+	spyTime.sleeps = append(spyTime.sleeps, d)
+}
+
+func TestConfigurableDelayer(t *testing.T) {
+	spyTime := SpyTime{}
+	confDelay := ConfigurableDelayer{delaySeconds: 4000, sleeper: spyTime.Sleep}
+	wantSleeps := []time.Duration{4000 * time.Second}
+	confDelay.Sleep()
+	gotSleeps := spyTime.sleeps
+	if !reflect.DeepEqual(gotSleeps, wantSleeps) {
+		t.Errorf("got %q, want %q", gotSleeps, wantSleeps)
 	}
 }

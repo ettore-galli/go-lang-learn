@@ -37,18 +37,18 @@ func MyGreetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type Delayer interface {
-	Sleep(d time.Duration)
+	Sleep()
 }
 
 type BasicDelayer struct {
 }
 
-func (BasicDelayer) Sleep(d time.Duration) {
-	time.Sleep(d)
+func (BasicDelayer) Sleep() {
+	time.Sleep(1 * time.Second)
 }
 
 type ConfigurableDelayer struct {
-	timeDelayer  Delayer
+	sleeper      func(time.Duration)
 	delaySeconds int64
 }
 
@@ -56,8 +56,8 @@ func (ConfigurableDelayer) delayDuration(seconds int64) time.Duration {
 	return time.Duration(seconds) * time.Second
 }
 
-func (delayer ConfigurableDelayer) Sleep(d time.Duration) {
-	delayer.timeDelayer.Sleep(delayer.delayDuration(delayer.delaySeconds))
+func (delayer ConfigurableDelayer) Sleep() {
+	delayer.sleeper(delayer.delayDuration(delayer.delaySeconds))
 }
 
 func Countdown(b io.Writer, delayer Delayer) {
@@ -65,7 +65,7 @@ func Countdown(b io.Writer, delayer Delayer) {
 	const countdownStart = 3
 	for i := countdownStart; i > 0; i-- {
 		fmt.Fprintf(b, "%d\n", i)
-		delayer.Sleep(1 * time.Second)
+		delayer.Sleep()
 	}
 	fmt.Fprint(b, finalWord)
 }
@@ -81,5 +81,7 @@ func main() {
 	if true {
 		Countdown(os.Stdout, &BasicDelayer{})
 	}
-
+	// if true {
+	// 	Countdown(os.Stdout, &ConfigurableDelayer{delaySeconds: 2, sleeper: time.Sleep})
+	// }
 }
