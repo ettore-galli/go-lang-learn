@@ -97,6 +97,12 @@ func BenchmarkFunction(b *testing.B) {
 }
 ```
 
+## Goroutine
+
+```go
+go func(a string){doSomething(a)}("a")
+```
+
 ## Useful operators
 
 Test for slice equality

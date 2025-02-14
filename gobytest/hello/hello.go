@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"example.com/hello/internal/calc"
+	"example.com/hello/internal/concur"
 	"example.com/hello/internal/greeter"
 	"moul.io/banner"
 )
@@ -78,10 +79,19 @@ func main() {
 	if false {
 		printDemo()
 	}
-	if true {
+	if false {
 		Countdown(os.Stdout, &BasicDelayer{})
 	}
-	// if true {
-	// 	Countdown(os.Stdout, &ConfigurableDelayer{delaySeconds: 2, sleeper: time.Sleep})
-	// }
+	if false {
+		Countdown(os.Stdout, &ConfigurableDelayer{delaySeconds: 2, sleeper: time.Sleep})
+	}
+	if true {
+		websites := []string{"www.pippo.it", "www.pluto.it", "www.notworking.com"}
+		slowChecker := func(url string) bool {
+			time.Sleep(2 * time.Second)
+			return url != "www.notworking.com"
+		}
+		fmt.Println(concur.CheckWebsites(slowChecker, websites))
+
+	}
 }
