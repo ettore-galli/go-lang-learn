@@ -1,5 +1,10 @@
 package concur
 
+import (
+	"net/http"
+	"time"
+)
+
 type WebsiteChecker func(string) bool
 
 type result = struct {
@@ -23,4 +28,28 @@ func CheckWebsites(wsCheck WebsiteChecker, urls []string) map[string]bool {
 	}
 
 	return resultMap
+}
+
+func tryMakeRequest(url string) time.Duration {
+	start := time.Now()
+	http.Get(url)
+	return time.Since(start)
+}
+
+func tryGetAnyResponse(url string) chan struct{} {
+	response := make(chan struct{})
+	go func() {
+		http.Get(url)
+		close(response)
+	}()
+	return response
+}
+
+func Racer(alfa string, beta string) string {
+	select {
+	case <-tryGetAnyResponse(alfa):
+		return alfa
+	case <-tryGetAnyResponse(beta):
+		return beta
+	}
 }
