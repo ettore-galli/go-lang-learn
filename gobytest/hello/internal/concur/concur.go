@@ -1,6 +1,7 @@
 package concur
 
 import (
+	"errors"
 	"net/http"
 	"time"
 )
@@ -45,11 +46,25 @@ func tryGetAnyResponse(url string) chan struct{} {
 	return response
 }
 
-func Racer(alfa string, beta string) string {
+func GeneralRacer(timeout time.Duration, alfa string, beta string) (string, error) {
 	select {
 	case <-tryGetAnyResponse(alfa):
-		return alfa
+		return alfa, nil
 	case <-tryGetAnyResponse(beta):
-		return beta
+		return beta, nil
+	case timeoutErr := <-func() chan error {
+		errChannel := make(chan error)
+		go func() {
+			time.Sleep(timeout)
+			errChannel <- errors.New("timeout reached")
+			close(errChannel)
+		}()
+		return errChannel
+	}():
+		return "", timeoutErr
 	}
+}
+
+func Racer(alfa string, beta string) (string, error) {
+	return GeneralRacer(10*time.Second, alfa, beta)
 }
